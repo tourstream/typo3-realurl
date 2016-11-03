@@ -589,6 +589,7 @@ class UrlEncoder extends EncodeDecoderBase {
 	 */
 	protected function encodePathComponents() {
 		$this->fixPageId();
+		$this->resolveShortcut();
 		$cacheEntry = $this->cache->getPathFromCacheByPageId($this->rootPageId,
 			$this->sysLanguageUid,
 			$this->urlParameters['id'],
@@ -943,6 +944,28 @@ class UrlEncoder extends EncodeDecoderBase {
 				throw new \Exception(sprintf('Page with alias "%s" does not exist.', $alias), 1457183797);
 			}
 		}
+	}
+
+	/**
+	 * Resolve shortcut to the immediate shortcut target.
+	 */
+	protected function resolveShortcut()
+	{
+		$pageId = $this->urlParameters['id'];
+		$page = $this->pageRepository->getPage_noCheck($pageId);
+		if ($this->isSimpleShortcutPage($page)) {
+			$this->urlParameters['id'] = $page['shortcut'];
+		}
+	}
+
+	/**
+	 * Check if a page is a simple shortcut.
+	 */
+	protected function isSimpleShortcutPage($page)
+	{
+		return $page
+			&& intval($page['doktype']) === PageRepository::DOKTYPE_SHORTCUT
+			&& intval($page['shortcut_mode']) == PageRepository::SHORTCUT_MODE_NONE;
 	}
 
 	/**
